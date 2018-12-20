@@ -9,32 +9,30 @@ A Python Remake of Calculator Game "The Three Kingdoms"
 	
 TODO:
 	1. Senario class
-	2. Game class
-	3. Main entrance
-	4. GlobalControl class
+	2. Lords
 """
 import os
 import random
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-from enum import Enum
 
 MILITARY_PAY = 10
 RECRUIT_BASE = 1000
 FAME_BASE = 10
 EARNING = 5000
 GRAIN = 10000
+	
+class Enum:
+	def __init__(self, **kwargs):
+		self.ele_dict = kwargs
+		for k, v in self.ele_dict.items():
+			setattr(self, k, v)
+	def __len__(self):
+		return len(self.ele_dict)
 
-class Mode(Enum):
-	EPIC = 1
-	ADVENTURE = 2
-
-class ActionID(Enum):
-	ATTACK = 1
-	RECUPERATE = 2
-	RECRUIT = 3
-	TRAIN = 4
-		
+mode_id = Enum(EPIC=1, ADVENTURE=2)		
+senario_id = Enum(TEST_SENARIO=1)
+	
 class AI(metaclass=ABCMeta):
 	def __init__(self):
 		super(AI, self).__init__()
@@ -43,25 +41,22 @@ class AI(metaclass=ABCMeta):
 		pass
 		
 class AISim(AI):
-	def __init__(self, attk_idx=0.5):
+	def __init__(self, attk_rate=0.5):
 		super(AISim, self).__init__()
-		assert(attk_idx < 1.0)
-		self.attk_idx = attk_idx
+		assert(attk_rate < 1.0)
+		self.attk_rate = attk_rate
 	def get_next_action(self, others):
-		if random.random() < self.attk_idx:
-			return ActionID.ATTACK, (others[random.randint(len(others))], )
-		return random.randint(2,4)
-		
-		
-class Senario	
+		if random.random() < self.attk_rate:
+			return Lord.actions.ATTACK, (others[random.randint(len(others))], )
+		return Lord.actions[random.randint(2,4)]
 
 class Switcher:
 	def __init__(self, opt_lst, idx_lst=None):
 		self.update(opt_lst, idx_lst)
 	def switch(self, arg):
 		return self.opt_dict.get(arg)
-	def update(self, opt_lst):
-		self.opt_dict = dict(enumerate(opt_lst)) if not idx_lst else dict(zip(idx_list, opt_lst))
+	def update(self, opt_lst, idx_lst):
+		self.opt_dict = dict(enumerate(opt_lst)) if not idx_lst else dict(zip(idx_lst, opt_lst))
 	
 class NonNegative:
 		def __init__(self, init):
@@ -86,7 +81,6 @@ class Lord:
 	"""
 	n_lords = 0	# A counter of the total number of lords
 	lord_dict = {}
-	act_switcher = Switcher((attack, recuperate, recruit, train), ActionID)
 	
 	def __init__(self, name, coin, food, troop, charm, polit, milit, fame, troop_milit, aggr):
 		super(Lord, self).__init__()
@@ -102,6 +96,8 @@ class Lord:
 		self.food = NonNegative(food)
 		self.troop = NonNegative(troop)
 		self.active = True
+		
+		self.actions = actions(self)
 		
 	def __new__(cls, *args, **kwargs):
 		if not cls.lord_dict.get(cls):
@@ -124,10 +120,14 @@ class Lord:
 	@property
 	def milit(self):
 		return self._milit
+		
+	@property
+	def fame(self):
+		return self._fame
 	
 	def recruit(self):
 		try:
-			raw = (self._fame*0.7 + self._charm*0.3)*random.random() * RECRUIT_BASE)
+			raw = (self._fame*0.7 + self._charm*0.3)*random.random() * RECRUIT_BASE
 			self.coin = self.coin - raw*MILITARY_PAY
 			self.troop = self.troop + raw
 		except ValueError:
@@ -170,13 +170,25 @@ class Lord:
 		self.n_lords -= 1
 	
 	def next_action(self, act_id, *param):
-		act_func = act_switcher(act_id)
+		act_func = self.actions[act_id]
 		act_func(self, *param)
+		return act_id, param
 		
 	def AI_next_action(self, others):
 		act_id, act_param = self.AI.get_next_action_par(others)
-		self.next_action(act_id, *act_param)
+		return self.next_action(act, *act_param)
 
+	class actions(Enum):
+		def __init__(self, lord):
+				_action_func = (lord.attack, lord.recuperate, lord.recruit, lord.train)
+				for (i, act) in enumerate(lord.actions):
+					setattr(actions, upper(act.__name__), i)
+		def __len__(self):
+			return len(_action_func)
+		def __get_item__(self, key):
+			return _action_func[key]
+				
+	
 class Event(metaclass = ABCMeta):
 	@classmethod
 	@abstractproperty
@@ -188,7 +200,7 @@ class Event(metaclass = ABCMeta):
 		pass
 	@classmethod
 	def disp_str(cls):
-		return f"发生事件：{}  {}".format(cls.info, cls.desc)
+		return "发生事件：{}\t{}".format(cls.info, cls.desc)
 	@classmethod
 	@abstractmethod
 	def trigger(cls, obj):
@@ -238,71 +250,206 @@ class EvtPlague(Event):
 		obj.troop = obj.troop*(1.0-random.random()/10)
 		
 class GlobalControl:			
-	class CLIGame(CLI):
-		def 
-	def __init__(self, data_dict, player, mode=Mode.EPIC, 
+	def __init__(self, lord_lst, player, mode=mode_id.EPIC, 
 							evt_lst = (EvtDrought, EvtHarvest, EvtPlague)):
 		super(GlobalControl, self).__init__()
-		data_dict = self.data_dict
+		self.lord_lst = lord_lst
 		self.player = player
 		self.mode = mode
 		self.evt_switcher = Switcher(evt_lst)
-		self.cli_ctrl = CLIGame
+		self.lord_act_desc = ["攻击", "休养", "征募", "练兵"]
 		
 	def check(self):
-		len_dict = len(self.data_dict)
-		if len_dict == 0:
+		n_lords_cur = len(self.lord_lst)
+		if n_lords_cur == 0:
 			return False, "尴尬了，没有幸存者"
-		elif len_dict == 1:
-			return False, f"{}势力获得胜利".format(list(self.data_dict)[0].name)
+		elif n_lords_cur == 1:
+			return False, "{}势力获得胜利".format(self.lord_lst[0].name)
 			
-		for k, v in self.data_dict.items():
-			if not v.active:
-				if v == self.player and self.mode == Mode.ADVENTURE:
-					return False, f"{}势力被消灭".format(self.player.name)
-				del v
-				self.data_dict.pop(k)
+		for l in self.lord_lst:
+			if not l.active:
+				if l == self.player and self.mode == mode_id.ADVENTURE:
+					return False, "{}势力被消灭".format(self.player.name)
+				del l
 		return True, ""
 	
 	def report_event(self):
 		idx = int(random.random()*10)
 		evt = self.evt_switcher.switch(idx)
+		CLI.print_ln(evt.disp_str)
 		evt.global_effect()
-		return evt.disp_str
+	
+	def show_action_log(self, this, act_id, param):
+		if act_id == Lord.actions.ATTACK:
+			log_info = "{} 向 {} 发起进攻".format(this.name, self.param[0].name)
+		else:
+			log_info = "{} {}".format(this.name, self.lord_act_desc[act_id])
+		CLI.println(log_info)
 		
-	def next_turn(self):
-		for v in self.data_dict.values():
-			if v == self.player:
-				act_id, param = self.cli_ctrl.get_command("请输入指令：")
-				v.next_action(act_id, *param)
+	def do_next_turn(self):
+		for i, l in enumerate(self.lord_lst):
+			if l == self.player:
+				act_id, param = self.get_commands()
+				l.next_action(act, *param)
 			else:
-				others = [obj for obj in self.data_dict.values() if obj is not v]
-				v.AI_next_action(others)
-
+				others = self.lord_lst[:i]+self.lord_lst[(i+1):]
+				act_id, param = l.AI_next_action(others)
+				
+			self.show_action_log(l, act_id, param)
+	
+	def show_states(self):
+			head = "编号\t姓名\t金钱\t粮食\t士兵\t声望\t军队战斗力"
+			CLI.print_info(head)
+			CLI.print_info('-'*len(head))
+			for i, l in enumerate(self.lord_lst):
+				CLI.print_info("{no:02d}\t{name}\t{coin}\t{food}\t{troop}\t{fame}\t{troop_milit}".format(
+											no=i, name=l.name, coin=l.coin, food=l.food, troop=l.troop, 
+											fame=l.fame, troop_milit=l.troop_milit))
+	
+	def show_cmds(self):
+		for i, cmd in enumerate(self.lord_act_desc):
+			CLI.print_info("[{}] {}".format(i, cmd))
+			
+	def get_commands(self):
+		self.show_cmds()
+		act_id = CLI.safe_input_enum("请输入指令编号：", Lord.actions, "非法指令！")			
+		if act_id == Lord.actions.ATTACK:
+			while True:
+				try:
+					act_param = CLI.safe_input_list_elem("请选择攻击对象编号：", self.lord_lst, "非法的攻击对象！")
+					assert(act_param is not self.player)
+				except:
+					CLI.print_info("不能攻击自己！")
+				else:
+					break
+			
+		return act_id, act_param
+		
+	def main_loop(self):
+		while True:
+			chk_stat, chk_str = self.check()
+			if not chk_stat:
+				CLI.pause()
+				CLI.print_ln(chk_str)
+				return 
+			
+			self.show_states()
+			self.report_event()
+			self.do_next_turn()
+			
+			CLI.printed("本月结束")
+		
+	
 class CLI:
 	@staticmethod
 	def print_info(info):
 		print(info)
 	@staticmethod
-	def println(info):
-		print_info(info)
+	def pause():
 		os.system("pause")
-	@staticmethod
-	def show_help():
-		pass
 	@staticmethod
 	def clear():
 		os.system("cls")
 	@staticmethod
-	def show_welcome():
-		pass
+	def println(info):
+		CLI.print_info(info)
+		CLI.pause()
+	@staticmethod
+	def printed(info):
+		CLI.println(info)
+		CLI.clear()
 	@staticmethod
 	def get_command(prompt):
 		return input(prompt)
+	@staticmethod
+	def safe_input_enum(prompt, enum_cls, err_str):
+		while True:
+			try:
+				val = int(CLI.get_command(prompt))
+				assert(val >0 and val <= len(enum_cls))
+			except TypeError:
+				# Handling codes could and should differ for differnt error types
+				CLI.print_info(err_str)
+			except AssertionError:
+				CLI.print_info(err_str)
+			except ValueError:
+				CLI.print_info(err_str)
+			else:
+				break			
+		return val
+	@staticmethod
+	def safe_input_list_elem(prompt, lst, err_str):
+		while True:
+			try:
+				idx = int(CLI.get_command(prompt))
+				val = lst[idx]
+			except TypeError:
+				# CLI.print_info(err_str + " Type Error")
+				CLI.print_info(err_str)
+			except IndexError:
+				CLI.print_info(err_str)
+			except ValueError:
+				CLI.print_info(err_str)
+			else:
+				break
+		return val
+		
+class Senario:
+	senarios = {}
+	def __init__(self, lord_lst, evt_lst):
+		self.lord_lst = lord_lst
+		self.evt_lst = evt_lst
+	def show_states(self):
+			head = "编号\t姓名\t初始金钱\t初始粮食\t初始士兵\t初始声望\t魅力\t政治能力\t军事能力\t军队战斗力"
+			CLI.print_info(head)
+			CLI.print_info('-'*len(head))
+			for i, l in enumerate(self.lord_lst):
+				CLI.print_info("{no:02d}\t{name}\t{coin}\t{food}\t{troop}\t{fame}\t{charm}\t{polit}\t{milit}\t{troop_milit}"
+											.format(
+											no=i, name=l.name, coin=l.coin, food=l.food, troop=l.troop, 
+											fame=l.fame, charm=l.charm, polit=self.polit, milit=self.milit, troop_milit=self.troop_milit
+														)
+										)		
+Senario.senarios[senario_id.TEST_SENARIO] = Senario((), (EvtDrought, EvtHarvest, EvtPlague))
 
 class Game:
+	def __init__(self):
+		super(Game, self).__init__()
+		self.init_game()
+	
+	def show_welcome(self):
+		pass
+	def show_help(self):
+		pass
+	def show_settings(self):
+		pass
+	def set_game(self):
+		CLI.print_info("选择游戏模式：[1] Epic\t[2] ADVENTURE")
+		self.mode = CLI.safe_input_enum("请输入指令编号：", mode_id, "非法指令！")
+		CLI.clear()
+		CLI.print_info("选择剧本：[1] 测试剧本")
+		sen_id = CLI.safe_input_enum("请输入指令编号：", senario_id, "非法指令！")
+		CLI.clear()
+		self.senario = Senario.senarios.get(sen_id)
+		self.senario.show_states()
+		self.player = CLI.safe_input_list_elem("请选择势力：", self.senario.lord_lst, "非法输入！")
+		self.gc = GlobalControl(self.senario.lord_lst, self.player, self.mode, self.senario.evt_lst)
+		
+	def init_game(self):
+		self.show_welcome()
+		self.set_game()
+		self.show_settings()
+	
+	def run(self):
+		self.gc.main_loop()
+		
 	def __new__(cls, *args, **kwargs):
 		# Singleton
 		return (hasattr(cls, '_instance') and getattr(cls, '_instance')) \
 					or (setattr(cls, '_instance', object.__new__(cls, *args, **kwargs)) or getattr(cls, '_instance'))
 					
+					
+if __name__ == '__main__':
+	new_game = Game()
+	new_game.run()
+	
