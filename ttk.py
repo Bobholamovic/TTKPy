@@ -8,10 +8,11 @@ A Python Remake of Calculator Game "The Three Kingdoms"
 	It is a boring afternoon off the Internet. 
 	
 TODO:
-	1. More scenarios and lords
-	2. Perhaps Action classes and callback functions can be used to decouple the classes
-	3. Show detailed action log
-	4. Every-month basis like food consumption
+	1. Perhaps Action classes and callback functions can be used to decouple the classes
+	2. Show detailed action log
+	3. Every-month basis like food consumption or coin and food addition
+	4. Get the lords and senarios to xml file or something
+	5. Add some plots to senarios (perhaps by using generators? )
 """
 import os
 import random
@@ -34,7 +35,8 @@ class Enum:
 		return len(self.ele_dict)
 
 mode_id = Enum(EPIC=0, ADVENTURE=1)		
-senario_id = Enum(TEST_SENARIO=0, DongHanMo=1)
+senario_id = Enum(TEST_SENARIO=0, DJCQ_189=1, YSCD_197=2, GDZZ_200=3, 
+									CBZZ_208=4, GYBF_219=5, SGDL_221=6, JWBF_238=7, XLZZ_272=8)
 	
 class AI(metaclass=ABCMeta):
 	def __init__(self):
@@ -49,8 +51,12 @@ class AISim(AI):
 		assert(attk_rate < 1.0)
 		self.attk_rate = attk_rate
 	def get_next_action_par(self, this, others):
-		if random.random() < self.attk_rate:
+		if this.troop > 100 and random.random() < self.attk_rate:
 			return this.actions.ATTACK, (others[random.randint(0, len(others)-1)], )
+		elif this.troop < 100 and this.coin > 100:
+			return this.actions.RECRUIT, ()
+		elif this.coin < 50 or this.food < 50:
+			return this.actions.RECUPERATE, ()
 		return random.randint(1,3), ()
 
 class Switcher:
@@ -194,8 +200,8 @@ class Lord:
 		self.fame = self.fame + random.random()*FAME_BASE
 		
 	def train(self):
-		degree = self._milit*0.2
-		self._morale = min(1.0, self._morale + degree)
+		morale = self._milit*0.2/self.troop*100
+		self._morale = min(1.0, self._morale + morale)
 		
 	def die(self):
 		self.coin = 0
@@ -218,7 +224,7 @@ class Lord:
 # charm, polit, milit, fame, aggr	
 class LiuBei(Lord):
 	def __init__(self, coin, food, troop, morale):
-		super(LiuBei, self).__init__("刘备", coin, food, troop, morale, 0.99, 0.70, 0.60, 0.90, 0.50)
+		super(LiuBei, self).__init__("刘备", coin, food, troop, morale, 0.99, 0.75, 0.60, 0.90, 0.50)
 
 class SunJian(Lord):
 	def __init__(self, coin, food, troop, morale):
@@ -226,7 +232,7 @@ class SunJian(Lord):
 		
 class SunCe(Lord):
 	def __init__(self, coin, food, troop, morale):
-		super(SunCe, self).__init__("孙策", coin, food, troop, morale, 0.75, 0.42, 0.88, 0.75, 0.85)
+		super(SunCe, self).__init__("孙策", coin, food, troop, morale, 0.91, 0.42, 0.88, 0.75, 0.85)
 
 class YuanShao(Lord):
 	def __init__(self, coin, food, troop, morale):
@@ -258,7 +264,7 @@ class GongSunZan(Lord):
 
 class DongZhuo(Lord):
 	def __init__(self, coin, food, troop, morale):
-		super(DongZhuo, self).__init__("董卓", coin, food, troop, morale, 0.12, 0.25, 0.77, 0.01, 0.6)
+		super(DongZhuo, self).__init__("董卓", coin, food, troop, morale, 0.12, 0.25, 0.77, 0.05, 0.6)
 
 class MaTeng(Lord):
 	def __init__(self, coin, food, troop, morale):
@@ -266,9 +272,65 @@ class MaTeng(Lord):
 		
 class CaoCao(Lord):
 	def __init__(self, coin, food, troop, morale):
-		super(CaoCao, self).__init__("曹操", coin, food, troop, morale, 0.95, 0.89, 0.92, 0.75, 0.60)
+		super(CaoCao, self).__init__("曹操", coin, food, troop, morale, 0.95, 0.89, 0.92, 0.73, 0.05)
 
-				
+class LiuZhang(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(LiuZhang, self).__init__("刘璋", coin, food, troop, morale, 0.65, 0.50, 0.44, 0.69, 0.60)
+
+class ShiXie(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(ShiXie, self).__init__("士燮", coin, food, troop, morale, 0.88, 0.85, 0.44, 0.85, 0.60)
+
+class ZhangLu(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(ZhangLu, self).__init__("张鲁", coin, food, troop, morale, 0.63, 0.67, 0.71, 0.71, 0.60)
+
+class ZhangYang(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(ZhangYang, self).__init__("张杨", coin, food, troop, morale, 0.73, 0.40, 0.71, 0.77, 0.60)
+
+class ZhangXiu(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(ZhangXiu, self).__init__("张绣", coin, food, troop, morale, 0.64, 0.31, 0.86, 0.54, 0.52)
+
+class LiJue(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(LiJue, self).__init__("李傕", coin, food, troop, morale, 0.05, 0.09, 0.58, 0.01, 0.60)
+
+class SunQuan(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(SunQuan, self).__init__("孙权", coin, food, troop, morale, 0.88, 0.84, 0.77, 0.74, 0.40)
+		
+class SunHao(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(SunHao, self).__init__("孙皓", coin, food, troop, morale, 0.21, 0.55, 0.60, 0.66, 0.30)
+
+class SiMaYan(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(SiMaYan, self).__init__("司马炎", coin, food, troop, morale, 0.85, 0.85, 0.85, 0.85, 0.85)
+		
+class CaoPi(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(CaoPi, self).__init__("曹丕", coin, food, troop, morale, 0.77, 0.81, 0.76, 0.70, 0.65)
+
+class CaoRui(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(CaoRui, self).__init__("曹叡", coin, food, troop, morale, 0.79, 0.80, 0.78, 0.76, 0.60)
+		
+class LiuShan(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(LiuShan, self).__init__("刘禅", coin, food, troop, morale, 0.42, 0.45, 0.51, 0.83, 0.60)
+		
+class LvBu(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(LvBu, self).__init__("吕布", coin, food, troop, morale, 0.63, 0.51, 0.89, 0.56, 0.55)
+
+class YanBaiHu(Lord):
+	def __init__(self, coin, food, troop, morale):
+		super(YanBaiHu, self).__init__("严白虎", coin, food, troop, morale, 0.36, 0.43, 0.56, 0.22, 0.20)
+
+		
 class Event(metaclass = ABCMeta):
 	@abstractproperty
 	def info(self):
@@ -352,7 +414,9 @@ class GlobalControl:
 			if self.check_single(this):
 				log_info += "\n{} 势力被消灭了".format(this.name)
 				dead.append(this)
-			for l in dead: self.lord_lst.remove(l)
+			for l in dead: 
+				self.lord_lst.remove(l)
+				del l
 			if self.player in dead:
 				self.player = None
 		else:
@@ -378,6 +442,7 @@ class GlobalControl:
 	
 	def show_states(self):
 			CLI.clear()
+			CLI.emptyln()
 			self.senario.show_states(show_attr=False, lord_lst=self.lord_lst)
 			CLI.emptyln()
 	
@@ -539,20 +604,79 @@ Senario.senarios[senario_id.TEST_SENARIO] = Senario([
 																										SunCe(100, 100, 100, 0.5), 
 																										LiuBei(100, 100, 100, 0.5)
 																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "测试剧本")
-Senario.senarios[senario_id.DongHanMo] = Senario([
-																										CaoCao(2000, 2000, 300, 0.8), 
-																										SunJian(1000, 2000, 500, 0.6), 
-																										LiuBei(500, 500, 100, 0.6), 
-																										LiuYao(1000, 1000, 300, 0.5), 
-																										YuanShao(5000, 5000, 1000, 0.2), 
-																										YuanShu(4000, 10000, 800, 0.4), 
-																										DongZhuo(15000, 15000, 2000, 0.1), 
-																										LiuBiao(8000, 8000, 800, 0.6), 
-																										HanFu(300, 300, 150, 0.5), 
-																										GongSunZan(3000, 3000, 600, 0.6), 
-																										MaTeng(300, 300, 200, 1.0), 
-																										LiuYan(5000, 5000, 600, 0.6)
-																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "东汉末·董卓立新主")
+Senario.senarios[senario_id.DJCQ_189] = Senario([
+																										DongZhuo(1500, 1500, 2000, 0.1), 
+																										CaoCao(200, 200, 300, 0.8), 
+																										SunJian(100, 200, 500, 0.6), 
+																										LiuBei(50, 50, 100, 0.6), 
+																										LiuYao(100, 100, 300, 0.5), 
+																										YuanShao(500, 500, 1000, 0.2), 
+																										YuanShu(400, 1000, 800, 0.4), 
+																										LiuBiao(800, 800, 700, 0.6), 
+																										HanFu(30, 30, 150, 0.5), 
+																										GongSunZan(300, 300, 300, 0.6), 
+																										MaTeng(100, 100, 200, 1.0), 
+																										LiuYan(500, 500, 600, 0.6), 
+																										YanBaiHu(100, 100, 150, 0.4), 
+																										ShiXie(300, 300, 600, 0.4)
+																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元189年 董卓篡权")
+Senario.senarios[senario_id.YSCD_197] = Senario([
+																										YuanShu(1000, 2000, 1000, 0.4), 
+																										CaoCao(500, 500, 500, 0.8), 
+																										SunCe(300, 200, 300, 0.8), 
+																										LiuBei(80, 80, 150, 0.6), 
+																										LiuYao(200, 200, 300, 0.5), 
+																										YuanShao(1000, 1000, 800, 0.4), 
+																										LiuBiao(800, 800, 600, 0.5), 
+																										GongSunZan(300, 300, 250, 0.5), 
+																										MaTeng(100, 100, 200, 0.9), 
+																										LiuZhang(500, 450, 500, 0.5), 
+																										ShiXie(400, 400, 600, 0.4), 
+																										ZhangLu(200, 300, 200, 0.6), 
+																										ZhangXiu(200, 200, 200, 0.7), 
+																										LiJue(500, 500, 600, 0.1), 
+																										ZhangYang(300, 200, 200, 0.6), 
+																										LvBu(300, 300, 250, 0.7)
+																									], (EvtDrought(), EvtDrought(), EvtPlague()), "公元189年 袁术称帝")
+Senario.senarios[senario_id.GDZZ_200] = Senario([
+																										YuanShao(2000, 1500, 1200, 0.5), 
+																										CaoCao(700, 600, 600, 0.8), 
+																										SunCe(300, 400, 400, 0.8), 
+																										LiuBei(100, 100, 150, 0.5), 
+																										MaTeng(200, 200, 200, 0.9), 
+																										ZhangLu(200, 300, 250, 0.6), 
+																										LiuZhang(500, 500, 400, 0.5), 
+																										LiuBiao(800, 800, 600, 0.5), 
+																										ShiXie(400, 400, 600, 0.4)
+																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元200年 官渡之战")
+Senario.senarios[senario_id.CBZZ_208] = Senario([
+																										CaoCao(2000, 2000, 1800, 0.7), 
+																										SunQuan(1000, 1300, 550, 0.6), 
+																										LiuBei(500, 500, 300, 0.8), 
+																										ZhangLu(200, 300, 250, 0.6),
+																										MaTeng(300, 300, 300, 0.9), 
+																										LiuZhang(500, 600, 500, 0.5), 
+																										ShiXie(200, 200, 350, 0.5)
+																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元219年 赤壁之战")
+Senario.senarios[senario_id.GYBF_219] = Senario([
+																										CaoCao(2000, 2200, 2000, 0.5), 
+																										SunQuan(1500, 2000, 1200, 0.5), 
+																										LiuBei(1200, 1500, 1000, 0.9)
+																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元219年 关羽北伐")
+Senario.senarios[senario_id.SGDL_221] = Senario([
+																										CaoPi(2000, 2500, 2100, 0.6), 
+																										SunQuan(1800, 1000, 1200, 0.7), 
+																										LiuBei(500, 400, 800, 0.6)
+																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元221年 三国鼎立")
+Senario.senarios[senario_id.JWBF_238] = Senario([
+																										CaoRui(2000, 2000, 3000, 0.6), 
+																										SunQuan(1500, 1500, 1600, 0.5), 
+																										LiuShan(600, 600, 1200, 0.8)
+																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元238年 姜维北伐")
+Senario.senarios[senario_id.XLZZ_272] = Senario([
+																										SiMaYan(2100, 1900, 3200, 0.6), 
+																										SunHao(1000, 1500, 1800, 0.7), 
+																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元272年 西陵之战")
 
 class Game:
 	def __init__(self):
@@ -566,7 +690,7 @@ class Game:
 	def show_settings(self):
 		pass
 	def set_game(self):
-		CLI.print_info("选择游戏模式：[0] Epic\t[1] ADVENTURE")
+		CLI.print_info("选择游戏模式：[0] 史诗\t[1] 冒险")
 		self.mode = CLI.safe_input_enum("请输入指令编号：", mode_id, "非法指令！")
 		CLI.clear()
 		CLI.print_info("选择剧本：")
