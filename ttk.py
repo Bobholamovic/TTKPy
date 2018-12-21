@@ -24,7 +24,7 @@ MILITARY_PAY = 1
 RECRUIT_BASE = 100
 EARNING = 50
 GRAIN = 100
-FAME_BASE = 0.01
+FAME_BASE = 0.05
 COL_LEN = 7
 	
 class Enum:
@@ -52,9 +52,10 @@ class AISim(AI):
 		assert(attk_rate < 1.0)
 		self.attk_rate = attk_rate
 	def get_next_action_par(self, this, others):
-		if this.troop > 100 and random.random() < self.attk_rate:
+		if this.troop > 100 and (this.coin > this.troop/10 and this.food > this.troop/5) \
+			and random.random() < self.attk_rate:
 			return this.actions.ATTACK, (others[random.randint(0, len(others)-1)], )
-		elif this.troop < 100 and this.coin > 100:
+		elif this.troop < 100 and this.coin > 100 and this.food > 100:
 			return this.actions.RECRUIT, ()
 		elif this.coin < 50 or this.food < 50:
 			return this.actions.RECUPERATE, ()
@@ -160,15 +161,14 @@ class Lord:
 			self.troop += raw
 		else:
 			self.troop = self.troop + coin_old/MILITARY_PAY
-			self.coin = 0
-		self._morale = self._morale*troop_old/self.troop
+		self._morale = self._morale*troop_old/(self.troop+1e-8)
 			
 	def _defend(self, dmg):
 		grain = self.troop / 10
 		if not self._safe_sub('food', grain):
-			self.troop *= (random.random() * 0.5 + min(0.5, self._charm))
+			self.troop *= (random.random() * 0.3 + 0.2 + min(0.5, self._charm))
 		if not self._safe_sub('troop', dmg):
-			False
+			return False
 		return True
 	
 	def _pre_attack(self):
@@ -176,20 +176,23 @@ class Lord:
 			self._morale *= (random.random() * 0.1 + 0.6)
 		if not self._safe_sub('food', self.troop/5):
 			self._morale *= (random.random() * 0.2 + 0.6)
-			self.troop *= (random.random() * 0.5 + 0.4)
+			self.troop *= (random.random() * 0.15 + 0.75)
 			
 	def attack(self, rival):
+		if self.troop < 1:
+			# Stop the battle if the attacker does not have enough troop
+			return
 		fame = (random.random()-(self.fame-rival.fame))*FAME_BASE
-		self._safe_sub('fame', fame)
+		self._safe_sub('fame', max(min(fame, 0.5), -0.5))
 		attk, defen = (self, rival) if (random.random()>0.6) else (rival, self)
-		cs_rate = (0.3+random.random()*0.5) if (random.random() < 0.01) else 1.0
+		cs_rate = (0.3+random.random()*0.5) if (random.random() < 0.03) else 1.0
 		attk._pre_attack()
-		dmg = attk.troop/10 * (attk._milit*0.4 + attk._morale*0.3 + attk.food/(attk.troop+1e-8)*0.3) / cs_rate
+		dmg = attk.troop/10 * (attk._milit*0.4 + attk._morale*0.6) / cs_rate
 		
 		if defen._defend(dmg): 
-			cs_rate_bk = (0.1+random.random()/10) if (random.random() < 0.02) else 1.0
-			defen._pre_attack()
-			dmg_bk = defen.troop/10 * (defen._milit*0.2 + defen._morale*0.3 + defen.food/(defen.troop+1e-8)*0.5) / cs_rate_bk
+			cs_rate_bk = (0.1+random.random()/10) if (random.random() < 0.05) else 1.0
+			# defen._pre_attack()
+			dmg_bk = defen.troop/10 * (defen._milit*0.2 + defen._morale*0.8) / cs_rate_bk
 			attk._defend(dmg_bk)
 		
 		if not rival.troop:
@@ -201,7 +204,7 @@ class Lord:
 		self.fame = self.fame + random.random()*FAME_BASE
 		
 	def train(self):
-		morale = self._milit*0.2/self.troop*100
+		morale = self._milit*0.2/(self.troop+1e-8)*100
 		self._morale = min(1.0, self._morale + morale)
 		
 	def die(self):
@@ -225,7 +228,7 @@ class Lord:
 # charm, polit, milit, fame, aggr	
 class LiuBei(Lord):
 	def __init__(self, coin, food, troop, morale):
-		super(LiuBei, self).__init__("刘备", coin, food, troop, morale, 0.99, 0.75, 0.60, 0.90, 0.50)
+		super(LiuBei, self).__init__("刘备", coin, food, troop, morale, 0.99, 0.75, 0.60, 0.90, 0.60)
 
 class SunJian(Lord):
 	def __init__(self, coin, food, troop, morale):
@@ -265,15 +268,15 @@ class GongSunZan(Lord):
 
 class DongZhuo(Lord):
 	def __init__(self, coin, food, troop, morale):
-		super(DongZhuo, self).__init__("董卓", coin, food, troop, morale, 0.12, 0.25, 0.77, 0.05, 0.6)
+		super(DongZhuo, self).__init__("董卓", coin, food, troop, morale, 0.12, 0.25, 0.77, 0.05, 0.60)
 
 class MaTeng(Lord):
 	def __init__(self, coin, food, troop, morale):
-		super(MaTeng, self).__init__("马腾", coin, food, troop, morale, 0.76, 0.10, 0.87, 0.65, 0.6)
+		super(MaTeng, self).__init__("马腾", coin, food, troop, morale, 0.76, 0.10, 0.87, 0.65, 0.60)
 		
 class CaoCao(Lord):
 	def __init__(self, coin, food, troop, morale):
-		super(CaoCao, self).__init__("曹操", coin, food, troop, morale, 0.95, 0.89, 0.92, 0.73, 0.05)
+		super(CaoCao, self).__init__("曹操", coin, food, troop, morale, 0.95, 0.89, 0.92, 0.73, 0.65)
 
 class LiuZhang(Lord):
 	def __init__(self, coin, food, troop, morale):
@@ -479,6 +482,7 @@ class GlobalControl:
 			if not (chk_stat & stat):
 				CLI.pause()
 				CLI.clear()
+				CLI.emptyln()
 				CLI.println(chk_str)
 				return 			
 			CLI.printed("本月结束")
@@ -638,7 +642,7 @@ Senario.senarios[senario_id.YSCD_197] = Senario([
 																										LiJue(500, 500, 600, 0.1), 
 																										ZhangYang(300, 200, 200, 0.6), 
 																										LvBu(300, 300, 250, 0.7)
-																									], (EvtDrought(), EvtDrought(), EvtPlague()), "公元189年 袁术称帝")
+																									], (EvtDrought()), "公元189年 袁术称帝")
 Senario.senarios[senario_id.GDZZ_200] = Senario([
 																										YuanShao(2000, 1500, 1200, 0.5), 
 																										CaoCao(700, 600, 600, 0.8), 
@@ -651,7 +655,7 @@ Senario.senarios[senario_id.GDZZ_200] = Senario([
 																										ShiXie(400, 400, 600, 0.4)
 																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元200年 官渡之战")
 Senario.senarios[senario_id.CBZZ_208] = Senario([
-																										CaoCao(2000, 2000, 1800, 0.7), 
+																										CaoCao(3000, 3000, 2000, 0.7), 
 																										SunQuan(1000, 1300, 550, 0.6), 
 																										LiuBei(500, 500, 300, 0.8), 
 																										ZhangLu(200, 300, 250, 0.6),
@@ -660,7 +664,7 @@ Senario.senarios[senario_id.CBZZ_208] = Senario([
 																										ShiXie(200, 200, 350, 0.5)
 																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元219年 赤壁之战")
 Senario.senarios[senario_id.GYBF_219] = Senario([
-																										CaoCao(2000, 2200, 2000, 0.5), 
+																										CaoCao(2000, 2200, 1800, 0.5), 
 																										SunQuan(1500, 2000, 1200, 0.5), 
 																										LiuBei(1200, 1500, 1000, 0.9)
 																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元219年 关羽北伐")
@@ -668,7 +672,7 @@ Senario.senarios[senario_id.SGDL_221] = Senario([
 																										CaoPi(2000, 2500, 2100, 0.6), 
 																										SunQuan(1800, 1000, 1200, 0.7), 
 																										LiuBei(500, 400, 800, 0.6)
-																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元221年 三国鼎立")
+																									], (EvtDrought(), EvtHarvest(), EvtHarvest(), EvtPlague()), "公元221年 三国鼎立")
 Senario.senarios[senario_id.JWBF_238] = Senario([
 																										CaoRui(2000, 2000, 3000, 0.6), 
 																										SunQuan(1500, 1500, 1600, 0.5), 
@@ -677,7 +681,7 @@ Senario.senarios[senario_id.JWBF_238] = Senario([
 Senario.senarios[senario_id.XLZZ_272] = Senario([
 																										SiMaYan(2100, 1900, 3200, 0.6), 
 																										SunHao(1000, 1500, 1800, 0.7), 
-																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元272年 西陵之战")
+																									], (EvtHarvest(), EvtHarvest(), EvtPlague()), "公元272年 西陵之战")
 
 class Game:
 	def __init__(self):
