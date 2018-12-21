@@ -13,6 +13,7 @@ TODO:
 	3. Every-month basis like food consumption or coin and food addition
 	4. Get the lords and senarios to xml file or something
 	5. Add some plots to senarios (perhaps by using generators? )
+	6. Welcome and help docs
 """
 import os
 import random
