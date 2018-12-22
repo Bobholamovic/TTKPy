@@ -642,7 +642,7 @@ Senario.senarios[senario_id.YSCD_197] = Senario([
 																										LiJue(500, 500, 600, 0.1), 
 																										ZhangYang(300, 200, 200, 0.6), 
 																										LvBu(300, 300, 250, 0.7)
-																									], (EvtDrought()), "公元189年 袁术称帝")
+																									], (EvtDrought(),), "公元189年 袁术称帝")
 Senario.senarios[senario_id.GDZZ_200] = Senario([
 																										YuanShao(2000, 1500, 1200, 0.5), 
 																										CaoCao(700, 600, 600, 0.8), 
