@@ -25,12 +25,12 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 MILITARY_PAY = 1
 RECRUIT_BASE = 50
-EARNING = 50
+EARNING = 100
 GRAIN = 100
 FAME_BASE = 0.025
-COIN_ATTACK = 0.4
+COIN_ATTACK = 0.3
 GRAIN_DEFENCE = 0.5
-GRAIN_ATTACK = 0.4
+GRAIN_ATTACK = 0.3
 SPOIL_RATE = 0.3
 COL_LEN = 7
 SOL_BASE = 300
@@ -226,10 +226,10 @@ class Lord:
 		attk_sol, attk_mor = self._pre_attack()
 		defen_sol, defen_mor = rival._pre_defend()
 		
-		cs_rate = (0.3+random.random()*0.5) if (random.random() < 0.1) else (1.0 - random.random()*0.05)
+		cs_rate = (0.3+random.random()*0.5) if (random.random() < 0.15) else (1.0 - random.random()*0.05)
 		dmg = attk_sol * ATTK_SOL_BASE * (self._milit*0.4 + attk_mor*0.6) / cs_rate
 		
-		cs_rate_bk = (0.1+random.random()*0.1) if (random.random() < 0.08) else (1.0 - random.random()*0.1)
+		cs_rate_bk = (0.1+random.random()*0.1) if (random.random() < 0.10) else (1.0 - random.random()*0.1)
 		dmg_bk = defen_sol * ATTK_SOL_BASE * (rival._milit*0.2 + defen_mor*0.8) / cs_rate_bk
 
 		defen_sur = rival._defend(defen_sol, dmg) 
@@ -671,84 +671,84 @@ class Senario:
 					CLI.print_info(CLI.unicode_left_align(l.fame, ":.2f", COL_LEN))
 				
 Senario.senarios[senario_id.TEST_SENARIO] = Senario([
-																										CaoCao(0, 0, 0, 0.5), 
-																										SunQuan(0, 0, 0, 0.5), 
-																										LiuBei(0, 0, 0, 0.5)
-																									], (EvtDrought(), EvtHarvest(), EvtPlague(), EvtNone()), "测试剧本")
+														CaoCao(0, 0, 0, 0.5), 
+														SunQuan(0, 0, 0, 0.5), 
+														LiuBei(0, 0, 0, 0.5)
+													], (EvtDrought(), EvtHarvest(), EvtPlague(), EvtNone()), "测试剧本")
 Senario.senarios[senario_id.DJCQ_189] = Senario([
-																										DongZhuo(1500, 1500, 2000, 0.1), 
-																										CaoCao(200, 200, 300, 0.8), 
-																										SunJian(100, 200, 500, 0.6), 
-																										LiuBei(50, 50, 100, 0.6), 
-																										LiuYao(100, 100, 300, 0.5), 
-																										YuanShao(500, 500, 1000, 0.2), 
-																										YuanShu(400, 1000, 800, 0.4), 
-																										LiuBiao(800, 800, 700, 0.6), 
-																										HanFu(100, 100, 150, 0.5), 
-																										GongSunZan(300, 300, 300, 0.6), 
-																										MaTeng(100, 100, 200, 1.0), 
-																										LiuYan(500, 500, 600, 0.6), 
-																										YanBaiHu(100, 100, 150, 0.4), 
-																										ShiXie(300, 300, 600, 0.4), 
-																										TaoQian(100, 100, 200, 0.5)
-																									], (EvtDrought(), EvtHarvest(), EvtPlague(), EvtNone()), "公元189年 董卓篡权")
+													DongZhuo(1500, 1500, 2000, 0.1), 
+													CaoCao(200, 200, 300, 0.8), 
+													SunJian(100, 200, 500, 0.6), 
+													LiuBei(50, 50, 100, 0.6), 
+													LiuYao(100, 100, 300, 0.5), 
+													YuanShao(500, 500, 1000, 0.2), 
+													YuanShu(400, 1000, 800, 0.4), 
+													LiuBiao(800, 800, 700, 0.6), 
+													HanFu(100, 100, 150, 0.5), 
+													GongSunZan(300, 300, 300, 0.6), 
+													MaTeng(100, 100, 200, 1.0), 
+													LiuYan(500, 500, 600, 0.6), 
+													YanBaiHu(100, 100, 150, 0.4), 
+													ShiXie(300, 300, 600, 0.4), 
+													TaoQian(100, 100, 200, 0.5)
+												], (EvtDrought(), EvtHarvest(), EvtPlague(), EvtNone()), "公元189年 董卓入京")
 Senario.senarios[senario_id.YSCD_197] = Senario([
-																										YuanShu(1000, 2000, 1000, 0.4), 
-																										CaoCao(500, 500, 500, 0.8), 
-																										SunCe(300, 200, 300, 0.8), 
-																										LiuBei(80, 80, 150, 0.6), 
-																										LiuYao(200, 200, 300, 0.5), 
-																										YuanShao(1000, 1000, 800, 0.4), 
-																										LiuBiao(800, 800, 600, 0.5), 
-																										GongSunZan(300, 300, 250, 0.5), 
-																										MaTeng(100, 100, 200, 0.9), 
-																										LiuZhang(500, 450, 500, 0.5), 
-																										ShiXie(400, 400, 600, 0.4), 
-																										ZhangLu(200, 300, 200, 0.6), 
-																										ZhangXiu(200, 200, 200, 0.7), 
-																										LiJue(500, 500, 600, 0.1), 
-																										ZhangYang(300, 200, 200, 0.6), 
-																										LvBu(300, 300, 250, 0.7)
-																									], (EvtDrought(), EvtNone()), "公元197年 袁术称帝")
+													YuanShu(1000, 2000, 1000, 0.4), 
+													CaoCao(500, 500, 500, 0.8), 
+													SunCe(300, 200, 300, 0.8), 
+													LiuBei(80, 80, 150, 0.6), 
+													LiuYao(200, 200, 300, 0.5), 
+													YuanShao(1000, 1000, 800, 0.4), 
+													LiuBiao(800, 800, 600, 0.5), 
+													GongSunZan(300, 300, 250, 0.5), 
+													MaTeng(100, 100, 200, 0.9), 
+													LiuZhang(500, 450, 500, 0.5), 
+													ShiXie(400, 400, 600, 0.4), 
+													ZhangLu(200, 300, 200, 0.6), 
+													ZhangXiu(200, 200, 200, 0.7), 
+													LiJue(500, 500, 600, 0.1), 
+													ZhangYang(300, 200, 200, 0.6), 
+													LvBu(300, 300, 250, 0.7)
+												], (EvtDrought(), EvtNone()), "公元197年 袁术称帝")
 Senario.senarios[senario_id.GDZZ_200] = Senario([
-																										YuanShao(2000, 1500, 1200, 0.5), 
-																										CaoCao(700, 600, 600, 0.8), 
-																										SunCe(300, 400, 400, 0.8), 
-																										LiuBei(100, 100, 150, 0.5), 
-																										MaTeng(200, 200, 200, 0.9), 
-																										ZhangLu(200, 300, 250, 0.6), 
-																										LiuZhang(500, 500, 400, 0.5), 
-																										LiuBiao(800, 800, 600, 0.5), 
-																										ShiXie(400, 400, 600, 0.4)
-																									], (EvtNone(), ), "公元200年 官渡之战")
+													YuanShao(2000, 1500, 1200, 0.5), 
+													CaoCao(700, 600, 600, 0.8), 
+													SunCe(300, 400, 400, 0.8), 
+													LiuBei(100, 100, 150, 0.5), 
+													MaTeng(200, 200, 200, 0.9), 
+													ZhangLu(200, 300, 250, 0.6), 
+													LiuZhang(500, 500, 400, 0.5), 
+													LiuBiao(800, 800, 600, 0.5), 
+													ShiXie(400, 400, 600, 0.4)
+												], (EvtNone(), ), "公元200年 官渡之战")
 Senario.senarios[senario_id.CBZZ_208] = Senario([
-																										CaoCao(3000, 3000, 2000, 0.7), 
-																										SunQuan(1000, 1300, 550, 0.6), 
-																										LiuBei(500, 500, 300, 0.8), 
-																										ZhangLu(200, 300, 250, 0.6),
-																										MaTeng(300, 300, 300, 0.9), 
-																										LiuZhang(500, 600, 500, 0.5), 
-																										ShiXie(200, 200, 350, 0.5)
-																									], ( EvtNone(), EvtHarvest()), "公元208年 赤壁之战")
+													CaoCao(3000, 3000, 2000, 0.7), 
+													SunQuan(1000, 1300, 550, 0.6), 
+													LiuBei(500, 500, 300, 0.8), 
+													ZhangLu(200, 300, 250, 0.6),
+													MaTeng(300, 300, 300, 0.9), 
+													LiuZhang(500, 600, 500, 0.5), 
+													ShiXie(200, 200, 350, 0.5)
+												], ( EvtNone(), EvtHarvest()), "公元208年 赤壁之战")
 Senario.senarios[senario_id.GYBF_219] = Senario([
-																										CaoCao(2000, 2200, 1800, 0.5), 
-																										SunQuan(1500, 2000, 1200, 0.5), 
-																										LiuBei(1200, 1500, 1000, 0.9)
-																									], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元219年 关羽北伐")
+													CaoCao(2000, 2200, 1800, 0.5), 
+													SunQuan(1500, 2000, 1200, 0.5), 
+													LiuBei(1200, 1500, 1000, 0.9)
+												], (EvtDrought(), EvtHarvest(), EvtPlague()), "公元219年 关羽北伐")
 Senario.senarios[senario_id.SGDL_221] = Senario([
-																										CaoPi(2000, 2500, 2100, 0.6), 
-																										SunQuan(1800, 1000, 1200, 0.7), 
-																										LiuBei(500, 400, 800, 0.6)
-																									], (EvtDrought(), EvtHarvest(), EvtHarvest(), EvtPlague()), "公元221年 三国鼎立")
+													CaoPi(2000, 2500, 2100, 0.6), 
+													SunQuan(1800, 1000, 1200, 0.7), 
+													LiuBei(500, 400, 800, 0.6)
+												], (EvtDrought(), EvtHarvest(), EvtHarvest(), EvtPlague()), "公元221年 三国鼎立")
 Senario.senarios[senario_id.JWBF_238] = Senario([
-																										CaoRui(2000, 2000, 3000, 0.6), 
-																										SunQuan(1500, 1500, 1600, 0.5), 
-																										LiuShan(600, 600, 1200, 0.8)
-																									], (EvtDrought(), EvtHarvest(), EvtPlague()) + (EvtNone(), )*3, "公元238年 姜维北伐")
+													CaoRui(2000, 2000, 3000, 0.6), 
+													SunQuan(1500, 1500, 1600, 0.5), 
+													LiuShan(600, 600, 1200, 0.8)
+												], (EvtDrought(), EvtHarvest(), EvtPlague()) + (EvtNone(), )*3, "公元238年 姜维北伐")
 Senario.senarios[senario_id.XLZZ_272] = Senario([
-																										SiMaYan(2100, 1900, 3200, 0.6), 
-																										SunHao(1000, 1500, 1800, 0.7), 
-																									], (EvtHarvest(), EvtHarvest(), EvtPlague(), EvtNone()), "公元272年 西陵之战")
+													SiMaYan(2100, 1900, 3200, 0.6), 
+													SunHao(1000, 1500, 1800, 0.7), 
+												], (EvtHarvest(), EvtHarvest(), EvtPlague(), EvtNone()), "公元272年 西陵之战")
 
 class Game:
 	def __init__(self):
