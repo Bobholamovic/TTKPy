@@ -17,6 +17,7 @@ TODO:
 	7. Date & time
 	8. Separate battle and attack (send some of rather than all of the troop to win a battle), for that I could 
 		make troop an individual class 
+    9. Multi-platform support
 """
 import os
 import random
@@ -35,7 +36,9 @@ SPOIL_RATE = 0.3
 COL_LEN = 7
 SOL_BASE = 300
 ATTK_SOL_BASE = 0.4
-	
+
+rand = random.random
+
 class Enum:
 	def __init__(self, **kwargs):
 		self.ele_dict = kwargs
@@ -62,7 +65,7 @@ class AISim(AI):
 		self.attk_rate = attk_rate
 	def get_next_action_par(self, this, others):
 		if this.troop > SOL_BASE and (this.coin > SOL_BASE*COIN_ATTACK and this.food > SOL_BASE*GRAIN_ATTACK) \
-			and random.random() < self.attk_rate:
+			and rand() < self.attk_rate:
 			return this.actions.ATTACK, (others[random.randint(0, len(others)-1)], )
 		elif this.troop < SOL_BASE and this.coin > 300 and this.food > 300:
 			return this.actions.RECRUIT, ()
@@ -165,7 +168,7 @@ class Lord:
 	def recruit(self):
 		troop_old = self.troop
 		coin_old = self.coin
-		raw = (self.fame*0.7 + self._charm*0.3)*random.random() * RECRUIT_BASE
+		raw = (self.fame*0.7 + self._charm*0.3)*rand() * RECRUIT_BASE
 		if self.safe_sub('coin', raw*MILITARY_PAY):
 			self.troop += raw
 		else:
@@ -185,8 +188,8 @@ class Lord:
 		grain = sol * GRAIN_DEFENCE
 		morale = self._morale
 		if not self.safe_sub('food', grain):
-			sol *= (random.random() * 0.3 + 0.2 + min(0.5, self._charm))
-			morale = (random.random() * 0.1 + 0.6)*self._morale
+			sol *= (rand() * 0.3 + 0.2 + min(0.5, self._charm))
+			morale = (rand() * 0.1 + 0.6)*self._morale
 			
 		return sol, morale
 		
@@ -197,16 +200,16 @@ class Lord:
 		grain = sol*GRAIN_ATTACK
 		morale = self._morale
 		if not self.safe_sub('coin', coin):
-			morale = (random.random() * 0.1 + 0.6)*self._morale
+			morale = (rand() * 0.1 + 0.6)*self._morale
 		if not self.safe_sub('food', grain):
-			morale = (random.random() * 0.2 + 0.6)*self._morale
-			sol *= (random.random() * 0.25 + 0.75)
+			morale = (rand() * 0.2 + 0.6)*self._morale
+			sol *= (rand() * 0.25 + 0.75)
 			
 		return sol, morale
 	
 	def _plunder(self, tar):
-		coin_t = tar.coin*(SPOIL_RATE+random.random()*(1.0-SPOIL_RATE)*0.5)
-		grain_t = tar.food*(SPOIL_RATE+random.random()*(1.0-SPOIL_RATE)*0.5)
+		coin_t = tar.coin*(SPOIL_RATE+rand()*(1.0-SPOIL_RATE)*0.5)
+		grain_t = tar.food*(SPOIL_RATE+rand()*(1.0-SPOIL_RATE)*0.5)
 		self.coin += coin_t
 		self.food += grain_t
 		tar.coin -= coin_t
@@ -216,7 +219,7 @@ class Lord:
 		if self.troop < 1:
 			# Stop the battle if the attacker does not have enough troop
 			return
-		fame = (random.random()-(self.fame-rival.fame))*FAME_BASE
+		fame = (rand()-(self.fame-rival.fame))*FAME_BASE
 		self.safe_sub('fame', max(min(fame, 0.5), -0.5))
 		
 		if rival.troop < 1:
@@ -226,10 +229,10 @@ class Lord:
 		attk_sol, attk_mor = self._pre_attack()
 		defen_sol, defen_mor = rival._pre_defend()
 		
-		cs_rate = (0.3+random.random()*0.5) if (random.random() < 0.15) else (1.0 - random.random()*0.05)
+		cs_rate = (0.3+rand()*0.5) if (rand() < 0.15) else (1.0 - rand()*0.05)
 		dmg = attk_sol * ATTK_SOL_BASE * (self._milit*0.4 + attk_mor*0.6) / cs_rate
 		
-		cs_rate_bk = (0.1+random.random()*0.1) if (random.random() < 0.10) else (1.0 - random.random()*0.1)
+		cs_rate_bk = (0.1+rand()*0.1) if (rand() < 0.10) else (1.0 - rand()*0.1)
 		dmg_bk = defen_sol * ATTK_SOL_BASE * (rival._milit*0.2 + defen_mor*0.8) / cs_rate_bk
 
 		defen_sur = rival._defend(defen_sol, dmg) 
@@ -241,19 +244,19 @@ class Lord:
 		if not self.troop:
 			rival._plunder(self)
 		else:
-			self._morale = (attk_sur*attk_mor + (self.troop-attk_sur)*self._morale) / self.troop
+			self._morale = (attk_sur*min(1.0, attk_mor+0.2*rand()) + (self.troop-attk_sur)*self._morale) / self.troop
 			
 		if not rival.troop:
 			self._plunder(rival)
 			rival.die()
 		else:
-			rival._morale = (defen_sur*defen_mor + (rival.troop-defen_sur)*rival._morale) / rival.troop
+			rival._morale = (defen_sur*min(1.0, defen_mor+0.2*rand()) + (rival.troop-defen_sur)*rival._morale) / rival.troop
 		
 		
 	def recuperate(self):
-		self.coin = self.coin + (self._polit+random.random()/3)*EARNING
-		self.food = self.food + (self._polit+random.random()/3)*GRAIN
-		self.fame = self.fame + random.random()*FAME_BASE
+		self.coin = self.coin + (self._polit+rand()/3)*EARNING
+		self.food = self.food + (self._polit+rand()/3)*GRAIN
+		self.fame = self.fame + rand()*FAME_BASE
 		
 	def train(self):
 		morale = self._milit*0.2/(self.troop+1e-8)*100
@@ -415,7 +418,7 @@ class EvtDrought(Event):
 	def desc(self):
 		return "粮食随机减少"
 	def trigger(self, obj):
-		obj.safe_sub('food', min(max(0.1, random.random()-obj.polit*0.8), 0.3)*GRAIN)
+		obj.safe_sub('food', min(max(0.1, rand()-obj.polit*0.8), 0.3)*GRAIN)
 		
 class EvtHarvest(Event):
 	@property
@@ -425,7 +428,7 @@ class EvtHarvest(Event):
 	def desc(self):
 		return "粮食随机增加"
 	def trigger(self, obj):
-		obj.food += random.random()/3*GRAIN
+		obj.food += rand()/3*GRAIN
 		
 class EvtPlague(Event):
 	@property
@@ -435,7 +438,7 @@ class EvtPlague(Event):
 	def desc(self):
 		return "兵士随机减员"
 	def trigger(self, obj):
-		obj.troop = obj.troop*(1.0-random.random()/10)
+		obj.troop = obj.troop*(1.0-rand()/10)
 
 class EvtNone(Event):
 	@property
@@ -775,6 +778,7 @@ class Game:
 		self.gc = GlobalControl(self.senario, self.player, self.mode)
 		
 	def init_game(self):
+		CLI.clear()
 		self.show_welcome()
 		self.set_game()
 		self.show_settings()
