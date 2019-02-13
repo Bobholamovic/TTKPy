@@ -2,7 +2,7 @@
 A Python Remake of Calculator Game "The Three Kingdoms"
 ---------------------------------------------------------------------
 
-@author: Bobholamovic
+@author: ...
 @date: 2018-12-19
 @note:
 	It is a boring afternoon off the Internet. 
